@@ -1,0 +1,6 @@
+node_modules/
+# Env files with secrets (use .env.*.example templates)
+.env
+.env.local
+.env.prod
+local.secrets.env

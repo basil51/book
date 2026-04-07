@@ -1,0 +1,92 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: book-local-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-local_dev_db_password}
+      POSTGRES_DB: ${DATABASE_NAME:-appointment}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: book-local-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-local_dev_db_password}
+      - DATABASE_NAME=${DATABASE_NAME:-appointment}
+      - JWT_SECRET=${JWT_SECRET:-local_dev_jwt_change_me}
+      - BASE_DOMAIN=${BASE_DOMAIN:-sparkco.localhost}
+      - BASE_URL=http://api.book.${BASE_DOMAIN:-sparkco.localhost}
+      - FRONTEND_ORIGIN=http://book.${BASE_DOMAIN:-sparkco.localhost}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.book-local-api.rule=Host(`api.book.${BASE_DOMAIN:-sparkco.localhost}`)"
+      - "traefik.http.routers.book-local-api.entrypoints=web"
+      - "traefik.http.routers.book-local-api.service=book-local-api"
+      - "traefik.http.services.book-local-api.loadbalancer.server.port=4001"
+    networks:
+      - app-network
+      - traefik
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: book-local-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api.book.${BASE_DOMAIN:-sparkco.localhost}
+      - BASE_DOMAIN=${BASE_DOMAIN:-sparkco.localhost}
+      - NEXT_PUBLIC_BASE_DOMAIN=${BASE_DOMAIN:-sparkco.localhost}
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.book-local-web.rule=Host(`book.${BASE_DOMAIN:-sparkco.localhost}`)"
+      - "traefik.http.routers.book-local-web.entrypoints=web"
+      - "traefik.http.routers.book-local-web.service=book-local-web"
+      - "traefik.http.services.book-local-web.loadbalancer.server.port=3000"
+    networks:
+      - app-network
+      - traefik
+
+networks:
+  app-network:
+    driver: bridge
+  traefik:
+    external: true
+    name: traefik
+
+volumes:
+  postgres_data:

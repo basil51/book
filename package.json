@@ -1,0 +1,31 @@
+{
+  "name": "my-fullstack-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:frontend\" \"pnpm dev:backend\"",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "build": "pnpm --filter @my-app/shared build && pnpm --filter frontend build && pnpm --filter backend build",
+    "build:shared": "pnpm --filter @my-app/shared build"
+  },
+  "devDependencies": {
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__generator": "^7.27.0",
+    "@types/babel__template": "^7.4.4",
+    "@types/babel__traverse": "^7.28.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1"
+  },
+  "packageManager": "pnpm@10.12.4",
+  "dependencies": {
+    "lucide-react": "^0.525.0",
+    "path-browserify": "^1.0.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hot-toast": "^2.6.0",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5"
+  }
+}

@@ -1,0 +1,22 @@
+
+  async updateMyBusiness(user: User, dto: UpdateBusinessDto): Promise<Business> {
+    const fullUser = await this.userRepo.findOne({
+      where: { id: user.id },
+      relations: ['business'],
+    });
+
+    if (!fullUser?.business) {
+      throw new NotFoundException('User is not linked to any business');
+    }
+
+    const business = await this.businessRepo.findOne({
+      where: { id: fullUser.business.id },
+    });
+
+    if (!business) {
+      throw new NotFoundException('Business not found');
+    }
+
+    Object.assign(business, dto);
+    return this.businessRepo.save(business);
+  }

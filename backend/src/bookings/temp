@@ -1,0 +1,19 @@
+    if (user.role !== 'admin') throw new ForbiddenException('Only admins can access this route');
+    // Verify the user has a business
+    const fullUser = await this.userRepo.findOne({
+    where: { id: user.id },
+    relations: ['business'],
+  });
+  
+  if (!fullUser || !fullUser?.business) {
+    console.log('current user', fullUser);
+    throw new BadRequestException('The current user is not associated with any business');
+  }
+    
+  return this.bookingRepo.createQueryBuilder('booking')
+    .leftJoinAndSelect('booking.service', 'service')
+    .leftJoinAndSelect('booking.user', 'user')
+    .leftJoin('service.business', 'business')
+    .where('business.id = :businessId', { businessId: fullUser.business.id })
+    .orderBy('booking.scheduled_at', 'ASC')
+    .getMany();

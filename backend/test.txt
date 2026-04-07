@@ -1,0 +1,21 @@
+Yarn 4.9.1
+➤ YN0000: ┌ Resolution step
+➤ YN0085: │ + @eslint/eslintrc@npm:3.3.1, @eslint/js@npm:9.28.0, @heroicons/react@npm:2.2.0, and 1100 more.
+➤ YN0000: └ Completed in 12s 412ms
+➤ YN0000: ┌ Post-resolution validation
+➤ YN0002: │ backend@workspace:backend doesn't provide webpack (p513de), requested by ts-loader.
+➤ YN0086: │ Some peer dependencies are incorrectly met by your project; run yarn explain peer-requirements <hash> for details, where <hash> is the six-letter p-prefixed code.
+➤ YN0086: │ Some peer dependencies are incorrectly met by dependencies; run yarn explain peer-requirements for details.
+➤ YN0000: └ Completed
+➤ YN0000: ┌ Fetch step
+➤ YN0013: │ A package was added to the project (+ 186.95 KiB).
+➤ YN0000: └ Completed in 6s 349ms
+➤ YN0000: ┌ Link step
+➤ YN0007: │ @swc/core@npm:1.11.29 [93b36] must be built because it never has been before or the last one failed
+➤ YN0007: │ @nestjs/core@npm:11.1.2 [93b36] must be built because it never has been before or the last one failed
+➤ YN0007: │ bcrypt@npm:6.0.0 must be built because it never has been before or the last one failed
+➤ YN0007: │ @tailwindcss/oxide@npm:4.1.8 must be built because it never has been before or the last one failed
+➤ YN0007: │ sharp@npm:0.34.2 must be built because it never has been before or the last one failed
+➤ YN0007: │ @scarf/scarf@npm:1.4.0 must be built because it never has been before or the last one failed
+➤ YN0000: └ Completed in 1m 6s
+➤ YN0000: · Done with warnings in 1m 25s

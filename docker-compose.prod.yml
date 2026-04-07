@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: book-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change_this_prod_db_password}
+      POSTGRES_DB: ${DATABASE_NAME:-appointment}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: book-prod-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${DATABASE_USER:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-change_this_prod_db_password}
+      - DATABASE_NAME=${DATABASE_NAME:-appointment}
+      - JWT_SECRET=${JWT_SECRET:-change_this_prod_jwt_secret}
+      - BASE_DOMAIN=${BASE_DOMAIN:-sparkco.vip}
+      - BASE_URL=https://api.book.${BASE_DOMAIN:-sparkco.vip}
+      - FRONTEND_ORIGIN=https://book.${BASE_DOMAIN:-sparkco.vip}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+    volumes:
+      - ./backend/uploads:/app/backend/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.book-prod-api.rule=Host(`api.book.${BASE_DOMAIN:-sparkco.vip}`)"
+      - "traefik.http.routers.book-prod-api.entrypoints=websecure"
+      - "traefik.http.routers.book-prod-api.tls=true"
+      - "traefik.http.routers.book-prod-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.book-prod-api.service=book-prod-api"
+      - "traefik.http.services.book-prod-api.loadbalancer.server.port=4001"
+    networks:
+      - app-network
+      - traefik
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: book-prod-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://api.book.${BASE_DOMAIN:-sparkco.vip}
+      - BASE_DOMAIN=${BASE_DOMAIN:-sparkco.vip}
+      - NEXT_PUBLIC_BASE_DOMAIN=${BASE_DOMAIN:-sparkco.vip}
+    depends_on:
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.book-prod-web.rule=Host(`book.${BASE_DOMAIN:-sparkco.vip}`)"
+      - "traefik.http.routers.book-prod-web.entrypoints=websecure"
+      - "traefik.http.routers.book-prod-web.tls=true"
+      - "traefik.http.routers.book-prod-web.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.book-prod-web.service=book-prod-web"
+      - "traefik.http.services.book-prod-web.loadbalancer.server.port=3000"
+    networks:
+      - app-network
+      - traefik
+
+networks:
+  app-network:
+    driver: bridge
+  traefik:
+    external: true
+    name: traefik
+
+volumes:
+  postgres_data:
